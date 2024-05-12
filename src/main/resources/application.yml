@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: Lead-Management-Service
+  datasource:
+    url: jdbc:mysql://localhost:3306/javabackend
+    username: root
+    password: Lemlem11!
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: update
+    show:
+      sql: true
+      
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    hostname: localhost
+      
+      
+server:
+  port: 8088
