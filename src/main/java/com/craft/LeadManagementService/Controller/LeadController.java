@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.craft.LeadManagementService.Dto.Customer;
 import com.craft.LeadManagementService.Model.Leads;
 import com.craft.LeadManagementService.Service.LeadService;
 
@@ -23,7 +24,7 @@ public class LeadController {
 	@Autowired
 	LeadService leadService;
 	
-	@PostMapping("/create")
+	@PostMapping("/post")
 	public ResponseEntity<?> createNewLead(@RequestBody Leads leads){
 		
 		try {
@@ -37,10 +38,10 @@ public class LeadController {
 	}
 	
 	@PutMapping("/convert/{leadId}")
-	public ResponseEntity<?> ConvertLeadCustomer(@PathVariable("leadId") String leadId, @RequestBody Leads leads){
+	public ResponseEntity<?> updateLead(@PathVariable("leadId") String leadId, @RequestBody Leads leads){
 		
 		
-	    return new 	ResponseEntity<>(leadService.ConvertLeadToCustomer(leadId, leads), HttpStatus.ACCEPTED);
+	    return new 	ResponseEntity<>(leadService.updateLead(leadId, leads), HttpStatus.ACCEPTED);
 	}
 	
 	@GetMapping("/get/{leadId}")
@@ -54,4 +55,15 @@ public class LeadController {
 		
 		return new ResponseEntity<>(leadService.deleteLeadById(leadId), HttpStatus.OK);		
 	}
+	@PutMapping("/update/{customerId}")
+	public ResponseEntity<?> createOrUpdateCustomer(@PathVariable("customerId") String customerId , @RequestBody Customer customer){
+		
+		return new ResponseEntity<>(leadService.UpdateCustomerFromLead(customerId, customer), HttpStatus.OK);
+	}
+	@PostMapping("/create")
+	public ResponseEntity<?> createCustomerFromLead(@RequestBody Customer customer){
+		
+		return new ResponseEntity<>(leadService.createCustomerFromLead(customer), HttpStatus.CREATED);
+	}
+	
 }

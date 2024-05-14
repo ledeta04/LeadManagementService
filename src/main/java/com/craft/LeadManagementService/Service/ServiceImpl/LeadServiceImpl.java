@@ -3,8 +3,14 @@ package com.craft.LeadManagementService.Service.ServiceImpl;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
+import com.craft.LeadManagementService.Dto.Customer;
 import com.craft.LeadManagementService.Dto.DeleteLeadsDto;
 import com.craft.LeadManagementService.Dto.LeadsResponseDto;
 import com.craft.LeadManagementService.JpaRepository.LeadsRepo;
@@ -18,6 +24,14 @@ public class LeadServiceImpl implements LeadService{
 	
 	@Autowired
 	LeadsRepo leadsRepo;
+	
+	
+	@Autowired
+	RestTemplate restTemplate;
+	
+	private final String url = "http://localhost:9094/customers/update/{customerId}";
+	
+	private final String uri = "http://localhost:9094/customers/create";
 
 	@Override
 	public LeadsResponseDto createNewLead(Leads leads) {
@@ -41,7 +55,7 @@ public class LeadServiceImpl implements LeadService{
 	}
 
 	@Override
-	public LeadsResponseDto ConvertLeadToCustomer(String leadId, Leads leads) {
+	public LeadsResponseDto updateLead(String leadId, Leads leads) {
 		
 		Optional<Leads> optional =  leadsRepo.findById(leadId);
 		
@@ -112,5 +126,54 @@ public class LeadServiceImpl implements LeadService{
 			
 		}
 
+	}
+
+	@Override
+	public Customer UpdateCustomerFromLead(String customerId , Customer customer) {
+		
+
+		HttpHeaders headers = new HttpHeaders();
+		HttpEntity<Customer> requestEntity = new HttpEntity<>(customer, headers);
+		
+		ResponseEntity<Customer> responseEntity = restTemplate.exchange(
+				
+				url, 
+				HttpMethod.PUT, 
+				requestEntity, 
+				Customer.class,
+				customerId
+				
+				);
+		
+		if(responseEntity.getStatusCode().is2xxSuccessful()) {
+			
+			return requestEntity.getBody();
+			
+		}else {
+			return null;
+		}
+	}
+
+	@Override
+	public Customer createCustomerFromLead(Customer customer) {
+
+		HttpHeaders headers = new HttpHeaders();
+		HttpEntity<Customer> requestEntity = new HttpEntity<>(customer, headers);
+		
+		ResponseEntity<Customer> responseEntity = restTemplate.exchange(
+				
+				uri, 
+				HttpMethod.POST, 
+				requestEntity, 
+				Customer.class);
+		
+		if(responseEntity.getStatusCode().is2xxSuccessful()) {
+			
+			return responseEntity.getBody();
+			
+		}else {
+			
+			return null;
+		}
 	}
 }
