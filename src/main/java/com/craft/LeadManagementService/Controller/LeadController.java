@@ -16,6 +16,9 @@ import com.craft.LeadManagementService.Dto.Customer;
 import com.craft.LeadManagementService.Model.Leads;
 import com.craft.LeadManagementService.Service.LeadService;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/leads")
 public class LeadController {
@@ -25,7 +28,7 @@ public class LeadController {
 	LeadService leadService;
 	
 	@PostMapping("/post")
-	public ResponseEntity<?> createNewLead(@RequestBody Leads leads){
+	public ResponseEntity<?> createNewLead(@RequestBody @Valid Leads leads){
 		
 		try {
 			
@@ -38,32 +41,52 @@ public class LeadController {
 	}
 	
 	@PutMapping("/convert/{leadId}")
-	public ResponseEntity<?> updateLead(@PathVariable("leadId") String leadId, @RequestBody Leads leads){
+	public ResponseEntity<?> updateLead(@PathVariable("leadId")@Valid String leadId, @RequestBody Leads leads){
 		
 		
 	    return new 	ResponseEntity<>(leadService.updateLead(leadId, leads), HttpStatus.ACCEPTED);
 	}
 	
-	@GetMapping("/get/{leadId}")
-	public ResponseEntity<?> getLeadById(@PathVariable("leadId") String leadId){
+	@GetMapping("/get/{leadId}")	
+	public ResponseEntity<?> getLeadById(@PathVariable("leadId")@Valid String leadId){
 		
-		return new ResponseEntity<>(leadService.getLeadsById(leadId), HttpStatus.OK);
+		try {
+			
+			return new ResponseEntity<>(leadService.getLeadsById(leadId), HttpStatus.OK);
+			
+		} catch (Exception e) {
 		
-	}
+			return new ResponseEntity<>(leadService.getLeadsById(leadId), HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}	
+
 	@DeleteMapping("/delete/{leadId}")
-	public ResponseEntity<?> deleteLeadById(@PathVariable("leadId") String leadId){
+	public ResponseEntity<?> deleteLeadById(@PathVariable("leadId")@Valid String leadId){
 		
 		return new ResponseEntity<>(leadService.deleteLeadById(leadId), HttpStatus.OK);		
 	}
 	@PutMapping("/update/{customerId}")
-	public ResponseEntity<?> createOrUpdateCustomer(@PathVariable("customerId") String customerId , @RequestBody Customer customer){
+	
+	@CircuitBreaker(name = "updateCustomerFromLead" , fallbackMethod = "updateCustomerFromLeadfallbackMethod")
+	public ResponseEntity<?> createOrUpdateCustomer(@PathVariable("customerId")@Valid String customerId , @RequestBody Customer customer){
 		
 		return new ResponseEntity<>(leadService.UpdateCustomerFromLead(customerId, customer), HttpStatus.OK);
 	}
+	
+	public ResponseEntity<?> updateCustomerFromLeadfallbackMethod(String customerId, Customer customer, Exception exception){
+		
+		return new ResponseEntity<>(exception.getMessage() , HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+	
 	@PostMapping("/create")
-	public ResponseEntity<?> createCustomerFromLead(@RequestBody Customer customer){
+	@CircuitBreaker(name = "createCustomerFromLead" , fallbackMethod = "createCustomerFromLeadfallbackMethod")
+	public ResponseEntity<?> createCustomerFromLead(@RequestBody @Valid Customer customer){
 		
 		return new ResponseEntity<>(leadService.createCustomerFromLead(customer), HttpStatus.CREATED);
+	}
+	public ResponseEntity<?> createCustomerFromLeadfallbackMethod(Exception exception){
+		
+		return new ResponseEntity<>("Customer Management Api is down", HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 	
 }
